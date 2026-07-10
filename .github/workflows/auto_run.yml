@@ -1,0 +1,50 @@
+name: Auto Playwright Task
+
+on:
+  # 1. 定时触发：使用 Cron 表达式。
+  # 注意：GitHub 使用 UTC 时间，比北京时间慢 8 小时。
+  # 北京时间早上 8:00 = UTC 时间 0:00。
+  schedule:
+    - cron: '0 0 * * *'  # 每天 UTC 0:00 (即北京时间 8:00) 运行
+    
+  # 2. 手动触发：方便你随时在网页上点击按钮测试
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest  # 使用 Ubuntu 虚拟环境
+
+    steps:
+    # 步骤 1：拉取你的代码
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 步骤 2：设置 Python 环境
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    # 步骤 3：安装 Python 依赖
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # 步骤 4：安装 Playwright 浏览器及系统依赖（极其重要！）
+    - name: Install Playwright browsers and deps
+      run: |
+        playwright install --with-deps chromium
+
+    # 步骤 5：运行你的 Python 脚本
+    - name: Run script
+      run: |
+        python main.py
+
+    # 步骤 6：(可选) 将截图上传到 GitHub，方便你查看结果
+    - name: Upload screenshot
+      if: always()  # 即使前面报错也上传
+      uses: actions/upload-artifact@v4
+      with:
+        name: browser-screenshot
+        path: baidu_screenshot.png
